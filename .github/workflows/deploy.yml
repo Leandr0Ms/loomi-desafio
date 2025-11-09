@@ -1,31 +1,38 @@
-name: CI/CD - Loomi Desafio
+name: 🚀 CI/CD Deploy to AWS EC2
 
 on:
   push:
     branches:
-      - main  
+      - main   # dispara o deploy sempre que fizer push na branch main
 
 jobs:
   deploy:
-    name: Deploy para EC2
+    name: Deploy FastAPI App to EC2
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Conectar via SSH e fazer o deploy
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          set -e
+          echo "Conectando na instância EC2..."
+          
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             cd ~/loomi-desafio/app
 
             echo "Atualizando código..."
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
 
             echo "Atualizando containers..."
             sudo docker-compose down --remove-orphans
@@ -35,3 +42,4 @@ jobs:
             sudo systemctl restart nginx
 
             echo "Deploy concluído com sucesso!"
+          EOF
