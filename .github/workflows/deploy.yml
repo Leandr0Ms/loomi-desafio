@@ -22,22 +22,26 @@ jobs:
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: 🚀 Deploy to EC2
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
         run: |
           set -e
           echo "🔗 Conectando na instância EC2..."
           
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             set -e
             cd ~/loomi-desafio/app
 
             echo "📄 Criando arquivo .env..."
-            cat > .env << EOL
-POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
-POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
-EOL
+            echo "POSTGRES_USER=${POSTGRES_USER}" > .env
+            echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> .env
+            echo "POSTGRES_DB=${POSTGRES_DB}" >> .env
+            echo "POSTGRES_HOST=${POSTGRES_HOST}" >> .env
+            echo "POSTGRES_PORT=${POSTGRES_PORT}" >> .env
 
             echo "📦 Atualizando código..."
             git fetch origin main
