@@ -3,7 +3,7 @@ name: 🚀 CI/CD Deploy to AWS EC2
 on:
   push:
     branches:
-      - main   # dispara o deploy sempre que fizer push na branch main
+      - main  # dispara o deploy sempre que houver push na branch main
 
 jobs:
   deploy:
@@ -11,35 +11,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 🧩 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup SSH key
+      - name: 🔑 Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to EC2
+      - name: 🚀 Deploy to EC2
         run: |
           set -e
-          echo "Conectando na instância EC2..."
+          echo "🔗 Conectando na instância EC2..."
           
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             cd ~/loomi-desafio/app
 
-            echo "Atualizando código..."
+            echo "📄 Criando arquivo .env..."
+            cat > .env << EOL
+POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+EOL
+
+            echo "📦 Atualizando código..."
             git fetch origin main
             git reset --hard origin/main
 
-            echo "Atualizando containers..."
+            echo "🐳 Atualizando containers..."
             sudo docker-compose down --remove-orphans
             sudo docker-compose up -d --build
 
-            echo "Reiniciando Nginx..."
+            echo "🌐 Reiniciando Nginx..."
             sudo systemctl restart nginx
 
-            echo "Deploy concluído com sucesso!"
+            echo "✅ Deploy concluído com sucesso!"
           EOF
