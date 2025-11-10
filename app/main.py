@@ -36,7 +36,7 @@ async def do_you_have_it():
     random_number = random.randint(1, 3)
     response = responses.get(random_number, "Something went wrong...")
 
-    return {"message": response}
+    return {"message": f"[v3] {response}"}
 
 
 # Endpoint to search for a string in the database and return an appropriate message

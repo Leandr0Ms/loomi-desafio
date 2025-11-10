@@ -29,7 +29,7 @@ resource "aws_key_pair" "ec2_key" {
   public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
-# 3 Security Group permitindo SSH 
+# 3 Security Group
 resource "aws_security_group" "ssh_sg" {
   name        = "allow_ssh"
   description = "Allow SSH inbound traffic"
